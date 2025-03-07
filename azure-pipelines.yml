@@ -1,0 +1,48 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  imageName: 'my-java-api'
+  azureContainerRegistry: '<your-acr-name>.azurecr.io'  # Reemplaza con tu ACR
+  dockerId: $(dockerId)
+  dockerPassword: $(dockerPassword)
+
+steps:
+  - task: UseJava@1
+    inputs:
+      version: '17'    
+      jdkArchitecture: 'x64'
+
+  - script: |
+      mvn clean package
+    displayName: 'Build with Maven'
+
+  - script: |
+      mvn test
+    displayName: 'Run Unit Tests'
+
+  - script: |
+      mvn verify
+    displayName: 'Run Functional Tests'
+
+  - task: Docker@2
+    inputs:
+      containerRegistry: '$(azureContainerRegistry)'
+      repository: '$(imageName)'
+      command: 'buildAndPush'
+      Dockerfile: 'Dockerfile'
+      tags: |
+        $(Build.BuildNumber)
+        latest
+
+  - script: |
+      git config --global user.name "nombreUsuario"
+      git config --global user.email "correoUsuario@gmail.com"
+      git tag v$(Build.BuildNumber)
+      git push origin --tags
+    displayName: 'Create and Push Git Tag'
