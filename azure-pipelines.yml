@@ -15,7 +15,7 @@ variables:
 steps:
   - task: UseJava@1
     inputs:
-      version: '17'    
+      version: '17'
       jdkArchitecture: 'x64'
 
   - script: |
